@@ -1,5 +1,6 @@
 #include "Header.h"
 
+
 int dlr[4] = { 1, -1, 0, 0 };
 int dlc[4] = { 0, 0, -1, 1 };
 
@@ -216,6 +217,7 @@ bool isCheckmate(int row, int column, int turn, string** data) // True : neu tai
 		}
 	}
 	//Xet duong an cua ngua
+	return 0;
 }
 
 int Board::checkMove(Move first, Move final, int turn)// 0: Di duoc, 1: KHong di duoc boi vi bi chieu, 2: Di sai , 3 : Chon sai quan co
@@ -229,6 +231,15 @@ int Board::checkMove(Move first, Move final, int turn)// 0: Di duoc, 1: KHong di
 	if (typeChessman(final.row, final.column, data) == turn)//Vi tri moi co quan cua minh hay khong
 		return 2;
 	//Vi tri moi bi sai
+	return 0;
 	
-	
+}
+
+void Board::Get_data(string a[8][8]) {
+	for (int i = 0; i < 8; i++) {
+		for (int j = 0; j < 8; j++) {
+
+			a[i][j] = this->data[i][j];
+		}
+	}
 }
