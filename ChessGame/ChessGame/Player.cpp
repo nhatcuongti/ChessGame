@@ -6,16 +6,327 @@ int Ma_c[8] = { 1, 2, 2, 1, -1, -2, -2, -1 };
 int Vua_r[8] = { -1,-1,-1,0,0,1,1,1 };
 int Vua_c[8] = { -1,0,1,-1,1,-1,0,1 };
 
+int dlr[4] = { 1, -1, 0, 0 };
+int dlc[4] = { 0, 0, -1, 1 };
 
-Player::Player(int num) {
-	turn = num;
+int dhr[4] = { 1, -1, 1, -1 };
+int dhc[4] = { 1, 1, -1, -1 };
+
+int dKr[8] = { -2, -1, 1, 2, 2, 1, -1, -2 };
+int dKc[8] = { 1, 2, 2, 1, -1, -2, -2, -1 };
+
+
+
+//************************Hao**************************//
+int kindChessman(int row, int column)
+{
+	string chessCheck = boardChess[row][column];
+	if (chessCheck[0] == 'X')
+		return 0;
+	if (chessCheck[0] == 'M')
+		return 1;
+	if (chessCheck[0] == 'T')
+		return 2;
+	if (chessCheck[0] == 'K')
+		return 3;
+	if (chessCheck[0] == 'Q')
+		return 4;
+	return 5;
+}
+
+void Player::takePos()
+{
+	PosMySelf = new Chessman[20];
+	PosOpposite = new Chessman[20];
 	nM = 0;
 	nO = 0;
-	
+	for (int i = 0; i < 8; i++)
+		for (int j = 0; j < 8; j++)
+			if (boardChess[i][j] != "|")
+			{
+				if (typeChessman(i, j, boardChess) == turn)
+				{
+					PosMySelf[nM].row = i;
+					PosMySelf[nM].column = j;
+					PosMySelf[nM].type = kindChessman(i, j);
+					nM++;
+				}
+				else
+				{
+					PosOpposite[nO].row = i;
+					PosOpposite[nO].column = j;
+					PosOpposite[nO].type = kindChessman(i, j);
+					nO++;
+				}
+			}
 }
-Player::~Player() {
 
+int checkExit(int xCheck, int yCheck, Chessman* Pos, int n)
+{
+	for (int i = 0; i < n; i++)
+	{
+		if ((Pos[i].row == xCheck) && (Pos[i].column == yCheck))
+		{
+			return  Pos[i].type;
+		}
+	}
+	return -1;
 }
+
+bool checkLine(Move first, Move final, int turn, string Board[20][20])
+{
+	for (int i = 0; i < 4; i++)
+	{
+		int rowCurrnet = first.row + dlr[i];
+		int columnCurrent = first.column + dlc[i];
+		while (true)
+		{
+			if (!checkOutside(rowCurrnet, columnCurrent))
+				break;
+			if (typeChessman(rowCurrnet, columnCurrent, Board) == turn)//Kiem tra quan dong minh khong
+				break;
+			if (final.row == rowCurrnet && final.column == columnCurrent)//Kiem tra xem o do co phai la o can den chua
+				return true;
+			if (typeChessman(rowCurrnet, columnCurrent, Board) != 0)
+				break;
+
+			rowCurrnet += dlr[i];
+			columnCurrent += dlc[i];
+		}
+	}
+	return false;
+}
+
+bool checCheo(Move first, Move final, int turn, string Board[20][20])
+{
+	for (int i = 0; i < 4; i++)
+	{
+		int rowCurrnet = first.row + dhr[i];
+		int columnCurrent = first.column + dhc[i];
+		while (true)
+		{
+			if (!checkOutside(rowCurrnet, columnCurrent))
+				break;
+			if (typeChessman(rowCurrnet, columnCurrent, Board) == turn)//Kiem tra quan dong minh khong
+				break;
+			if (final.row == rowCurrnet && final.column == columnCurrent)//Kiem tra xem o do co phai la o can den chua
+				return true;
+			if (typeChessman(rowCurrnet, columnCurrent, Board) != 0)
+				break;
+
+			rowCurrnet += dhr[i];
+			columnCurrent += dhc[i];
+		}
+	}
+	return false;
+}
+
+bool checkKnight(Move first, Move final, int turn, string Board[20][20])
+{
+	for (int i = 0; i < 8; i++)
+	{
+		int rowCurrent = first.row + dKr[i];
+		int columnCurrent = first.column + dKc[i];
+		if (!checkOutside(rowCurrent, columnCurrent))
+			continue;
+		if (typeChessman(rowCurrent, columnCurrent, Board) != turn)//Kiem tra quan dong minh khong
+			if (final.row == rowCurrent && final.column == columnCurrent)//Kiem tra xem o do co phai la o can den chua
+				return true;
+	}
+	return false;
+}
+
+bool checkTot(Move first, Move final, int turn, string Board[20][20])
+{
+	Move dTot[4];
+	dTot[0].column = -1;
+	dTot[1].column = 0;
+	dTot[2].column = 1;
+	if (turn == 1)
+		dTot[0].row = dTot[1].row = dTot[2].row = -1;
+	else
+		dTot[0].row = dTot[1].row = dTot[2].row = 1;
+
+	bool dd = false;
+	for (int i = 0; i < 2; i++)
+	{
+		int rowCurrent = first.row + dTot[i].row;
+		int columnCurrent = first.column + dTot[i].column;
+		if (!checkOutside(first.row + dTot[i].row, first.column + dTot[i].column))
+			continue;
+		int type = typeChessman(rowCurrent, columnCurrent, Board);
+		if (i != 1)
+		{
+			if (type == turn || type == 0)
+				continue;
+		}
+		else
+		{
+			if (type == 0)
+				dd = true;
+			else
+				continue;
+		}
+		if (rowCurrent == final.row && columnCurrent == final.column)
+			return true;
+	}
+	int rowCheck = first.row + dTot[2].row * 2;
+	int columnCheck = first.column;
+	if ((rowCheck != final.row) || (columnCheck != final.column))
+		return false;
+
+	if (turn == 1)
+		if (first.row != 6)
+			return false;
+	if (turn == 2)
+		if (first.row != 1)
+			return false;
+	if (!checkOutside(rowCheck, columnCheck))
+		return false;
+
+	if (dd && typeChessman(rowCheck, columnCheck, Board) == 0)
+		return true;
+	return false;
+}
+
+bool checkKing(Move first, Move final, int turn, string Board[20][20])
+{
+	for (int i = 0; i < 4; i++)
+		if (checkOutside(first.row + dlr[i], first.column + dlc[i]))
+			if (typeChessman(first.row + dlr[i], first.column + dlc[i], Board) != turn)
+				if (first.row + dlr[i] == final.row && first.column + dlc[i] == final.column)
+					return true;
+	for (int i = 0; i < 4; i++)
+		if (checkOutside(first.row + dhr[i], first.column + dhc[i]))
+			if (typeChessman(first.row + dhr[i], first.column + dhc[i], Board) != turn)
+				if (first.row + dhr[i] == final.row && first.column + dhc[i] == final.column)
+					return true;
+	return false;
+}
+
+void Player::killPos()
+{
+	nM = 0;
+	nO = 0;
+	delete[] PosMySelf;
+	delete[] PosOpposite;
+	PosMySelf = NULL;
+	PosOpposite = NULL;
+}
+
+bool checkRoad(Move firstMove, Move finalMove, int turn, int kindChessman, string boardChess[20][20])
+{
+	// Check nuoc di
+	if (kindChessman == 0) // Neu la xe
+	{
+		if (!checkLine(firstMove, finalMove, turn, boardChess))
+			return false;
+	}
+	else if (1 == kindChessman) // Neu la Ngua
+	{
+		if (!checkKnight(firstMove, finalMove, turn, boardChess))
+			return false;
+	}
+	else if (2 == kindChessman) // Neu la tuong
+	{
+		if (!checCheo(firstMove, finalMove, turn, boardChess))
+			return false;
+	}
+	else if (3 == kindChessman) // Neu la vua
+	{
+		if (!checkKing(firstMove, finalMove, turn, boardChess))
+			return false;
+	}
+	else if (4 == kindChessman) // Neu la hau
+	{
+		if (!checkLine(firstMove, finalMove, turn, boardChess) && !checCheo(firstMove, finalMove, turn, boardChess))
+			return false;
+	}
+	else if (5 == kindChessman)
+	{
+		if (!checkTot(firstMove, finalMove, turn, boardChess))
+			return false;
+	}
+	return true;
+}
+
+bool checkEatKing(Move kingMove, Chessman* Pos, int n, int turn, string B[20][20])
+{
+	for (int i = 0; i < n; i++)
+	{
+		Move firstMove;
+		firstMove.row = Pos[i].row;
+		firstMove.column = Pos[i].column;
+		if (checkRoad(firstMove, kingMove, turn, Pos[i].type, B))
+			return false;
+	}
+	return true;
+}
+
+bool Player::checkMove(Move firstMove, Move finalMove)
+{
+	takePos();
+	if (!checkOutside(finalMove.row, finalMove.column)) // check xem co lot ra ngoai ko
+		return false;
+	int kindChessman = checkExit(firstMove.row, firstMove.column, PosMySelf, nM);
+	if (kindChessman == -1)
+	{
+		killPos();
+		return false;
+	}
+	// check nuoc di
+	if (!checkRoad(firstMove, finalMove, turn, kindChessman, boardChess))
+		return false;
+	// Lay vi tri con vua
+	Move kingMove;
+	if (3 == kindChessman)
+	{
+		kingMove.row = finalMove.row;
+		kingMove.column = finalMove.column;
+	}
+	else
+		for (int i = 0; i < nM; i++)
+			if (PosMySelf[i].type == 3)
+			{
+				kingMove.row = PosMySelf[i].row;
+				kingMove.column = PosMySelf[i].column;
+				break;
+			}
+
+	string B[20][20];
+	for (int i = 0; i < 8; i++)
+		for (int j = 0; j < 8; j++)
+			B[i][j] = boardChess[i][j];
+	B[finalMove.row][finalMove.column] = B[firstMove.row][finalMove.column];
+	B[firstMove.row][firstMove.column] = "|";
+	Chessman Postmp[20];
+	int nTmp = 0;
+	for (int i = 0; i < nO; i++)
+		if (finalMove.row != PosOpposite[i].row || finalMove.column != PosOpposite[i].column)
+			Postmp[nTmp++] = PosOpposite[i];
+
+	int turnOpposite = (turn == 2) ? 1 : 2;
+	if (!checkEatKing(kingMove, Postmp, nTmp, turnOpposite, B))
+		return false;
+	return true;
+	killPos();
+}
+
+Player::~Player() {
+	if (PosOpposite != NULL)
+		delete[]PosOpposite;
+	PosOpposite = NULL;
+	nO = 0;
+	if (PosMySelf != NULL)
+		delete[]PosMySelf;
+	nM = 0;
+	PosMySelf = NULL;
+}
+//*****************************************************//
+
+
+
+//********************PHUOC****************************//
 void Player::takePos( Board& Chess) {
 	string type[6] = { "X","M","T","K","Q","t" };
 	string a[8][8];
@@ -287,3 +598,4 @@ bool Player::checkKMove() {
 	}
 	return 0;
 }
+//*****************************************************//
